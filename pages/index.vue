@@ -1,77 +1,121 @@
 <template>
-  <v-row justify="center" align="center">
-    <v-col cols="12" sm="8" md="6">
-      <v-card class="logo py-4 d-flex justify-center">
-        <NuxtLogo />
-        <VuetifyLogo />
-      </v-card>
-      <v-card>
-        <v-card-title class="headline">
-          Welcome to the Vuetify + Nuxt.js template
-        </v-card-title>
-        <v-card-text>
-          <p>Vuetify is a progressive Material Design component framework for Vue.js. It was designed to empower developers to create amazing applications.</p>
-          <p>
-            For more information on Vuetify, check out the <a
-              href="https://vuetifyjs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              documentation
-            </a>.
-          </p>
-          <p>
-            If you have questions, please join the official <a
-              href="https://chat.vuetifyjs.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="chat"
-            >
-              discord
-            </a>.
-          </p>
-          <p>
-            Find a bug? Report it on the github <a
-              href="https://github.com/vuetifyjs/vuetify/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="contribute"
-            >
-              issue board
-            </a>.
-          </p>
-          <p>Thank you for developing with Vuetify and I look forward to bringing more exciting features in the future.</p>
-          <div class="text-xs-right">
-            <em><small>&mdash; John Leider</small></em>
-          </div>
-          <hr class="my-3">
-          <a
-            href="https://nuxtjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt Documentation
-          </a>
-          <br>
-          <a
-            href="https://github.com/nuxt/nuxt.js"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Nuxt GitHub
-          </a>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            nuxt
-            to="/inspire"
-          >
-            Continue
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-col>
-  </v-row>
+  <div>
+    <div class="search-wrap">
+      <v-container class="search">
+      <v-row>
+        <v-col cols="6">
+          <v-text-field
+            v-model="title_book"
+            label="Search"
+            required
+          />
+        </v-col>
+        <v-col cols="3">
+          <v-select
+            v-model="genre"
+            :items="genOptions(this.$store.state.genres, 'Select')"
+            label="Genre"
+          />
+        </v-col>
+        <v-col cols="3">
+          <v-select
+            v-model="author"
+            :items="genOptions(this.$store.state.authors, 'Select')"
+            label="Author"
+          />
+        </v-col>
+      </v-row>
+        </v-container>
+    </div>
+    <BooksList :title_book="title_book" :genre="genre" :author="author" />
+  </div>
 </template>
+<script>
+import BooksList from "../components/BooksList";
+export default {
+  components: {BooksList},
+  data: () => ({
+    title_book: '',
+    genre: '',
+    author: '',
+    authorList: [],
+    genreList: []
+
+  }),
+  methods:{
+    genOptions(items, def){
+      const res = [];
+      if(def){
+        res.push({
+            text: def,
+            value: null
+        })
+      }
+
+      for(const value in items){
+        res.push({
+          text: items[value],
+          value
+        });
+      }
+      return res;
+    }
+  },
+  created() {
+    this.$store.commit('loading', true);
+    this.$axios.get('/books/get_genres', this.headerAxios).then(({status, data}) => {
+      this.$store.commit('genres', data.data);
+      this.$store.commit('loading', false);
+    });
+    this.$axios.get('/books/get_authors', this.headerAxios).then(({status, data}) => {
+      this.$store.commit('authors', data.data);
+      this.$store.commit('loading', false);
+    })
+  },
+  computed: {
+    headerAxios() {
+      return {
+        headers: {
+          'Authorization': 'Bearer ' + this.$store.state.token
+        }
+      }
+    },
+  }
+
+}
+</script>
+
+<style scoped>
+  .search-wrap{
+    width: 100%;
+    margin: 30px 0;
+    min-height: 300px;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .search{
+    background: #fafafa;
+    width: 75%;
+    margin: auto;
+    border-radius: 10px;
+    padding: 30px;
+
+  }
+  .search::after{
+    background: url('/img/bg.jpg') center/cover;
+    content: '';
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top:0;
+    left:0;
+    filter: blur(3px);
+    z-index: -1;
+
+  }
+</style>
